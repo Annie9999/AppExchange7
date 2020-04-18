@@ -1,0 +1,641 @@
+<aura:component controller="LeadSessionLinkedCtrl"
+    implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction"
+    access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="refreshLeadRecord" event="c:selectedsObjectRecordsEvent" action="{!c.doInit}" />
+    <aura:handler name="afterCreateLeadRecord" event="c:EnlargePictureEvent" action="{!c.handleAfterCreateLead}" />
+
+    <aura:handler event="force:refreshView" action="{!c.doInit}" />
+    <aura:handler event="force:showToast" action="{!c.doInit}"/>
+    <aura:handler event="lightning:tabFocused" action="{!c.doInit}"/>
+    <aura:attribute name="leadDataSession" type="Object[]" />
+    <aura:attribute name="leadDataSessionSize" type="Integer" default="0" />
+    <aura:attribute name="activeSections" type="List" />
+    <aura:attribute name="activeSectionsMessage" type="String" default="" />
+    <aura:attribute name="isModalSearchOpen" type="boolean" default="false" />
+    <aura:attribute name="selectedLookUpRecords" type="sObject[]" default="[]" />
+    <aura:attribute name="leadFilter" type="String" />
+    <aura:attribute name="lead" type="Lead" />
+    <aura:attribute name="leadIdForDialog" type="String" />
+    <aura:attribute name="isModalEditOpen" type="boolean" default="false" />
+    <aura:attribute name="isModalDeleteOpen" type="boolean" default="false" />
+    <!--<aura:attribute name="selectedProject" type="Object" default="" />-->
+    <aura:attribute name="projectCondition" type="String" default="AND iigproduct__Active__c = 'TRUE'" />
+    <!-- <aura:attribute name="leadSourceVal" type="String" /> -->
+    <aura:attribute name="picklistLeadSource" type="List" />
+    <!-- <aura:attribute name="mediaVal" type="String" /> -->
+    <!-- <aura:attribute name="mediaInput" type="String" /> -->
+    <!--<aura:attribute name="mediaInputForm" type="Boolean" default="false" />
+    <aura:attribute name="mediaInputEditForm" type="Boolean" default="false" />
+    <aura:attribute name="picklistMediaInfo" type="List" />
+   <aura:attribute name="purposeVal" type="String" />
+    <aura:attribute name="picklistPurpose" type="List" /> -->
+    <aura:attribute name="leadEdit" type="sObject" />
+    <aura:attribute name="leadNew" type="sObject" default="{
+        'FirstName': '',                                                
+        'LastName ': '' ,
+        'Email': '',                                                
+        'MobilePhone  ': '' ,                                        
+        'LeadSource': '' 
+                                                     
+    }" />
+    <!-- <aura:attribute name="leadNew" type="sObject" default="{}" /> -->
+    <aura:attribute name="socialID" type="String" />
+    <aura:attribute name="isNotLeadlinked" type="boolean" default="true" />
+    <aura:attribute name="SearchData" type="Object" />
+    <aura:attribute name="isModalNewOpen" type="boolean" default="false" />
+    <aura:attribute name="errorMessage" type="String" />
+    <aura:attribute name="sessionLeadDup" type="Object[]" />
+    <aura:attribute name="leadIdDel" type="String" default="" />
+    <aura:attribute name="isStartTableData" type="boolean" default="false" />
+    <aura:attribute name="isSearching" type="boolean" default="false" />
+    <aura:attribute name="defaultNewLeadValueField" type="Object" />
+
+    <aura:attribute name="recordId" type="String" />
+
+    <!-- attributes -->
+    <!-- <aura:handler event="force:refreshView" action="{!c.doInit}" />   -->
+
+    <!-- <aura:attribute name="mydata" type="Object" /> -->
+    <!-- <aura:attribute name="mycolumn" type="List"
+        default="[{fieldName: 'CreatedDateDisplay', label: 'Created Date', sortable: true, type: 'string'},{fieldName: 'Project__c', label: 'Project', sortable: true, type: 'string'},{fieldName: 'LeadSource', label: 'Lead Source', sortable: true, type: 'picklist'},{fieldName: 'Status', label: 'Lead Status', sortable: true, type: 'picklist'}]" />
+    <aura:attribute name="sortedBy" type="string" default="CreatedDate" />
+    <aura:attribute name="sortedDirection" type="string" default="desc" /> -->
+    <aura:attribute name="isShowButton" type="boolean" default="true" />
+    <!-- <aura:html tag="style">
+        .slds-card {
+        max-width: 100% !important;
+        height:250px !important;
+        }
+    </aura:html> -->
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-account" title="account">
+                        <lightning:icon iconName="standard:lead" alternativeText="lead" size="small" />
+                    </span>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span style="font-weight: bold">Leads ({!v.leadDataSessionSize}) </span>
+                    </h2>
+                </div>
+                <div class="{! (v.isShowButton == true? 'slds-no-flex':'slds-no-flex slds-hide')}">
+                    <button class="slds-button slds-button_neutral slds-button_icon-border-filled" title="Search"
+                        onclick="{! c.openModelSearch }">
+                        <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                            iconName="utility:search" size="x-small" alternativeText="icon" />
+                    </button>
+                </div>
+            </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+            <ui:scrollerWrapper class="full-height">
+                <!-- start Lead section detail -->
+                <aura:iteration var="item" items="{!v.leadDataSession}" indexVar="indexLead">
+                    <aura:if isTrue="{!indexLead != 0}">
+                        <aura:if isTrue="{!!v.isShowButton}">
+                            <div class="slds-p-vertical_small slds-accordion__list-item">
+                                <div style="padding-left: 0.75rem;padding-right: 0.75rem;">
+                                    <c:LeadSessionLinkedRecordComponent indexLead="{!indexLead}"
+                                        leadDataSession="{!v.leadDataSession}" recordData="{!item}"
+                                        sessionId="{!v.recordId}" isShowButton="false" />
+                                </div>
+                            </div>
+                            <aura:set attribute="else">
+                                <div class="slds-p-vertical_small slds-accordion__list-item">
+                                    <div style="padding-left: 0.75rem;padding-right: 0.75rem;">
+                                        <c:LeadSessionLinkedRecordComponent indexLead="{!indexLead}"
+                                            leadDataSession="{!v.leadDataSession}" recordData="{!item}"
+                                            sessionId="{!v.recordId}" />
+                                    </div>
+                                </div>
+                            </aura:set>
+                        </aura:if>
+                        <aura:set attribute="else">
+                            <aura:if isTrue="{!!v.isShowButton}">
+                                <div class="slds-p-vertical_small"
+                                    style="padding-left: 0.75rem;padding-right: 0.75rem;">
+                                    <c:LeadSessionLinkedRecordComponent indexLead="{!indexLead}"
+                                        leadDataSession="{!v.leadDataSession}" recordData="{!item}"
+                                        sessionId="{!v.recordId}" isShowButton="false" />
+                                </div>
+                                <aura:set attribute="else">
+                                    <div class="slds-p-vertical_small"
+                                        style="padding-left: 0.75rem;padding-right: 0.75rem;">
+                                        <c:LeadSessionLinkedRecordComponent indexLead="{!indexLead}"
+                                            leadDataSession="{!v.leadDataSession}" recordData="{!item}"
+                                            sessionId="{!v.recordId}" />
+                                    </div>
+                                </aura:set>
+                            </aura:if>
+                        </aura:set>
+                    </aura:if>
+                </aura:iteration>
+                <!-- <lightning:accordion allowMultipleSectionsOpen="true" onsectiontoggle="{! c.handleSectionToggle }"
+                    activeSectionName="{! v.activeSections }">
+                    <aura:iteration items="{!v.leadDataSession}" var="leadSession" indexVar="indexLead">
+                        <lightning:accordionSection name="{!leadSession.Id}" label="{!leadSession.iigproduct__Lead__r.Name}"
+                            class="accordionSec">
+
+                            <aura:set attribute="actions">
+                                <ul class="{! (v.isShowButton == true? 'slds-button-group-row':'slds-button-group-row slds-hide')}">
+                                    <li class="slds-button-group-item">
+                                        <div class="slds-dropdown-trigger slds-dropdown-trigger_clicked">
+                                            <button
+                                                class="slds-button slds-button_neutral slds-button_icon-border-filled"
+                                                title="Edit" value="{!indexLead}" onclick="{! c.openModelEdit }">
+                                                <lightning:icon
+                                                    class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                                                    iconName="utility:edit" size="x-small" alternativeText="icon" />
+                                            </button>
+                                            <button
+                                                class="slds-button slds-button_neutral slds-button_icon-border-filled"
+                                                title="Delete" value="{!indexLead}" onclick="{! c.openModelDelete }">
+                                                <lightning:icon
+                                                    class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                                                    iconName="utility:delete" size="x-small" alternativeText="icon" />
+                                            </button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </aura:set>
+                            <aura:set attribute="body">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">First Name</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    {!leadSession.iigproduct__Lead__r.FirstName}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">Last Name</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    {!leadSession.iigproduct__Lead__r.LastName}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">Mobile</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    {!leadSession.iigproduct__Lead__r.MobilePhone}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">Email</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    {!leadSession.iigproduct__Lead__r.Email}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">Interested Project</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    <a href="{! '/' + leadSession.Lead__r.Interested_Project__c}"
+                                                        target="_new">
+                                                        {!leadSession.Lead__r.Interested_Project__r.Name}
+                                                    </a></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                                            <span class="slds-form-element__label">Status</span>
+                                            <div class="slds-form-element__control">
+                                                <div class="slds-form-element__static">
+                                                    {!leadSession.iigproduct__Lead__r.Status}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aura:set>
+                        </lightning:accordionSection>
+                    </aura:iteration>
+                </lightning:accordion> -->
+                <!-- start Lead section detail -->
+            </ui:scrollerWrapper>
+        </div>
+    </article>
+
+    <!-- Search -->
+    <div class="slds-m-around_xx-large slds-hide" aura:id="searchModal">
+        <!--Use aura:if tag to display/hide popup based on isModalSearchOpen value-->
+        <aura:if isTrue="{!v.isModalSearchOpen}">
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_large">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <lightning:spinner aura:id="search-loading" class="slds-hide loadingSpinner" />
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModelSearch }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Lead Search</h2>
+                    </header>
+                    <aura:if isTrue="{!v.errorMessage != null}">
+                        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                            role="alert">
+                            <h2>
+                                <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                    xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                                <span>{!v.errorMessage + ' '}</span>
+                            </h2>
+                        </div>
+                    </aura:if>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"
+                        style="height: 500px;">
+                        <div class="slds-wrap slds-grid" style="padding-left: 10px;">
+                            <div class="slds-col slds-small-size_4-of-6" style="padding-right: 10px;">
+                                <lightning:input aura:id="enter-search" name="enter-search" label="Enter some text"
+                                    type="search" />
+                            </div>
+                            <div class="slds-col slds-small-size_2-of-6 slds-align_absolute-left"
+                                style="padding-right: 10px; margin-top: 24px;">
+                                <button class="slds-button slds-button_neutral height" onclick="{!c.leadSearch}"
+                                    style="margin-right: 10px;">
+                                    Search
+                                </button>
+                                <button class="slds-button slds-button_neutral slds-button_dual-stateful"
+                                    aria-live="assertive" style="margin-left: 0rem; !important"
+                                    onclick="{!c.openModelCreateLead}">
+                                    <span class="slds-text-not-pressed">
+                                        New Lead</span>
+                                </button>
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!!v.isSearching}">
+                                <aura:if isTrue="{! v.SearchData.length >0 }">
+                                        <div class="slds-wrap slds-grid" style="padding-left: 10px; padding-top: 15px;">
+                                            <table
+                                                class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_fixed-layout"
+                                                style="border: 1px solid rgb(221, 219, 218);">
+                                                <thead>
+                                                    <tr class="slds-line-height_reset" style="height: 40px;">
+                                                        <th class="" scope="col" style="width: 50px;padding-left:8px !important">
+                                                            <div class="slds-truncate" title="No." style="text-align: center;">No.
+                                                            </div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Name Th" style="text-align: center">
+                                                                Name</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Mobile" style="text-align: center;">
+                                                                Mobile</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Email" style="text-align: center;">
+                                                                Email</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="LeadSource"
+                                                                style="text-align: center;">LeadSource</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="Status" style="text-align: center;">
+                                                                Status</div>
+                                                        </th>
+                                                        <th class="" scope="col">
+                                                            <div class="slds-truncate" title="CreatedDate"
+                                                                style="text-align: center;">CreatedDate</div>
+                                                        </th>
+                                                        <th class="" scope="col" style="width: 80px;padding-right: 8px !important">
+                                                            <div class="slds-truncate" title="action" style="text-align: center;">
+                                                                Action
+                                                            </div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <aura:iteration items="{!v.SearchData}" var="data" indexVar="indexLead">
+                                                        <tr class="slds-hint-parent">
+                                                            <td data-label="action" style="padding-left:8px !important">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{! indexLead + 1}">
+                                                                    {! indexLead + 1}
+                                                                </div>
+                                                            </td>
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.Name}">
+                                                                    {!data.Name}
+                                                                </div>
+                                                            </td>
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.MobilePhone}">
+                                                                    {!data.MobilePhone}
+                                                                </div>
+                                                            </td>
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.Email}">
+                                                                    {!data.Email}
+                                                                </div>
+                                                            </td>
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.LeadSource}">
+                                                                    {!data.LeadSource}
+                                                                </div>
+                                                            </td>
+                                                         
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.Status}">
+                                                                    {!data.Status}
+                                                                </div>
+                                                            </td>
+                                                            <td data-label="action">
+                                                                <div class="slds-truncate" style="text-align: center;"
+                                                                    title="{!data.CreatedDateDisplay}">
+                                                                    {!data.CreatedDateDisplay}
+                                                                </div>
+                                                            </td>
+                                                            <!--action-->
+                                                            <td data-label="action" style="padding-right: 8px !important">
+                                                                <ul class="slds-button-group-row slds-align_absolute-center">
+                                                                    <li class="slds-button-group-item">
+                                                                        <div
+                                                                            class="slds-dropdown-trigger slds-dropdown-trigger_clicked">
+                                                                            <aura:if isTrue="{! data.isNotLeadlinked}">
+                                                                                <button
+                                                                                    class="slds-button slds-button_neutral slds-button_icon-border-filled"
+                                                                                    title="Add" value="{!indexLead}"
+                                                                                    onclick="{! c.addLeadFromSearchtoLinked }">
+                                                                                    <lightning:icon
+                                                                                        class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                                                                                        iconName="utility:add" size="x-small"
+                                                                                        alternativeText="icon" />
+                                                                                </button>
+                                                                                <aura:set attribute="else">
+                                                                                    <button
+                                                                                        class="slds-button slds-button_neutral slds-button_icon-border-filled"
+                                                                                        title="Remove" value="{!indexLead}"
+                                                                                        onclick="{! c.removeLeadFromSearchtoLinked }">
+                                                                                        <lightning:icon
+                                                                                            class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                                                                                            iconName="utility:dash" size="x-small"
+                                                                                            alternativeText="icon" />
+                                                                                    </button>
+                                                                                </aura:set>
+                                                                            </aura:if>
+                                                                        </div>
+                                                                    </li>
+                                                                </ul>
+                                                            </td>
+                                                        </tr>
+                                                    </aura:iteration>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <aura:set attribute="else">
+            
+                                            <div style="margin:50px; text-align:center !important">
+                                                <aura:if isTrue="{!!v.isStartTableData}">Not Found</aura:if>
+                                            </div>
+                                        </aura:set>
+                                    </aura:if>
+                        </aura:if>
+                        
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </div>
+    <!-- New -->
+    <div class="slds-m-around_xx-large slds-hide" aura:id="newModal">
+        <!--Use aura:if tag to display/hide popup based on isModalNewOpen value-->
+        <!-- <aura:if isTrue="{!v.isModalNewOpen}"> -->
+        <aura:if isTrue="false">
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <lightning:spinner aura:id="new-loading" class="slds-hide loadingSpinner" />
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModelCreateLead }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">New Lead </h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <aura:if isTrue="{!v.errorMessage != null}">
+                        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                            role="alert">
+                            <h2>
+                                <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                    xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                                <span>{!v.errorMessage + ' '}</span>
+                            </h2>
+                        </div>
+                    </aura:if>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"
+                        style="height: 442px;">
+                        <div class="slds-wrap slds-grid" style="padding-left: 10px;">
+                            <div class="slds-col slds-small-size_1-of-1" style="padding-right: 10px;">
+                                <div class="slds-form-element">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <label class="slds-form-element__label" for="form-element-01"><span
+                                                    class="slds-required">*</span>First Name
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <ui:inputText class="slds-input InputLeadElement"
+                                                    aura:id="newLeadFirstName" maxlength="80"
+                                                    value="{!v.leadNew.FirstName}" updateOn="keyup">
+                                                </ui:inputText>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <label class="slds-form-element__label" for="form-element-01"><span
+                                                    class="slds-required">*</span>Last Name
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <ui:inputText class="slds-input InputLeadElement"
+                                                    aura:id="newLeadLastName" maxlength="80"
+                                                    value="{!v.leadNew.LastName}" updateOn="keyup">
+                                                </ui:inputText>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <label class="slds-form-element__label" for="form-element-01">Mobile</label>
+                                            <div class="slds-form-element__control">
+                                                <ui:inputText class="slds-input InputLeadElement" aura:id="newLeadPhone"
+                                                    maxlength="80" value="{!v.leadNew.MobilePhone}" updateOn="keyup">
+                                                </ui:inputText>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <label class="slds-form-element__label" for="form-element-01">Email</label>
+                                            <div class="slds-form-element__control">
+                                                <ui:inputText class="slds-input InputLeadElement" aura:id="newLeadEmail"
+                                                    maxlength="80" value="{!v.leadNew.Email}" updateOn="keyup">
+                                                </ui:inputText>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--<div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <c:customLookup objectAPIName="Project__c" IconName="custom:custom61"
+                                                label="Interested Project" selectedRecord="{!v.selectedProject}"
+                                                onchange="{!c.projectChange}" condition="{!v.projectCondition}"
+                                                extraField="Is_Presales__c,Project_Name_EN__c"
+                                                extraSearchField="Project_Name_EN__c"
+                                                extraShowField="Project_Name_EN__c" required="true" />
+
+                                        </div>-->
+                                        <!--<div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <div class="slds-form-element__control">
+                                                <lightning:select value="{!v.leadNew.purpose_of_buying__c}"
+                                                    aura:id="newLeadPurpose" class="label-hidden"
+                                                    label="Purpose of Buying" onchange="{!c.purposeOfBuyingChange}"
+                                                    required="true">
+                                                    <option value="">Choose one...</option>
+                                                    <aura:iteration items="{!v.picklistPurpose}" var="item">
+                                                        <option value="{!item}">
+                                                            {!item}
+                                                        </option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </div>
+                                        </div>
+                                    </div>-->
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <div class="slds-form-element__control">
+                                                <lightning:select value="{!v.leadNew.LeadSource}"
+                                                    aura:id="newLeadLeadSource" class="label-hidden" label="Lead Source"
+                                                    onchange="{!c.leadSourceChange}" required="true">
+                                                    <option value="">Choose one...</option>
+                                                    <aura:iteration items="{!v.picklistLeadSource}" var="item">
+                                                        <option value="{!item}">
+                                                            {!item}
+                                                        </option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </div>
+                                        </div>
+                                        <!--<div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            <div class="slds-form-element__control">
+                                                <lightning:select value="{!v.leadNew.Media_info__c}"
+                                                    aura:id="newLeadMediaInfo" class="label-hidden" label="Media Info"
+                                                    onchange="{!c.mediaInfoChange}" required="true">
+                                                    <option value="">Choose one...</option>
+                                                    <aura:iteration items="{!v.picklistMediaInfo}" var="item">
+                                                        <option value="{!item}">
+                                                            {!item}
+                                                        </option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </div>
+                                        </div>-->
+                                    </div>
+                                    <!--<aura:if isTrue="{!v.mediaInputForm}">
+                                        <div class="slds-grid slds-wrap">
+                                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                                <span class="slds-form-element__label"><span
+                                                        class="slds-required">*</span>Please
+                                                    specify
+                                                </span>
+                                                <div class="slds-form-element__control">
+                                                    <ui:inputText class="slds-input mediaInput" aura:id="mediaInput"
+                                                        maxlength="80" keyup="{!c.mediaInputChange}"
+                                                        value="{!v.leadNew.Media_Info_Description__c }"
+                                                        updateOn="keyup">
+                                                    </ui:inputText>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </aura:if>-->
+                                    <!--<div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-large-size_1-of-1" style="padding: 2px">
+                                            <div class="slds-form-element__control">
+                                                <lightning:textarea label="Description" id="setHeight"
+                                                    style="height: 36px !important;max-width: 100% !important;"
+                                                    value="{!v.leadNew.Description__c}" />
+                                            </div>
+                                        </div>
+                                    </div>-->
+
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                            onclick="{! c.closeModelCreateLead }" />
+                        <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.submitCreateLead}" />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+         <aura:if isTrue="{!v.isModalNewOpen}">
+                <!-- <aura:if isTrue="false"> -->
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <lightning:spinner aura:id="new-loading" class="slds-hide loadingSpinner" />
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModelCreateLead }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">New Lead </h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <aura:if isTrue="{!v.errorMessage != null}">
+                        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                            role="alert">
+                            <h2>
+                                <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                    xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                                <span>{!v.errorMessage + ' '}</span>
+                            </h2>
+                        </div>
+                    </aura:if>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"
+                       style="padding: 0rem 1rem 0 1rem;" >
+                            <c:CreateLeadRecord defaultValueField="{!v.defaultNewLeadValueField}"/>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <!-- <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                            onclick="{! c.closeModelCreateLead }" />
+                        <lightning:button variant="brand" label="Save" title="Save" onclick="{!c.submitCreateLead}" />
+                    </footer> -->
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+         </aura:if>
+    </div>
+</aura:component>

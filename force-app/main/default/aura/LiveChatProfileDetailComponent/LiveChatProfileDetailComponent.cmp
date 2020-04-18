@@ -1,0 +1,266 @@
+<aura:component controller="LiveChatProfileDetail" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction" access="global">
+
+    <!-- handlers-->
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="isUser" type="Boolean" default="false"/>
+    <aura:attribute name="isOpenEditDetail" type="Boolean" default="false"/>
+    <aura:attribute name="editdetailErrorMessage" type="String"/>
+    <aura:attribute name="firstNameValue" type="String"/>
+    <aura:attribute name="lastNameValue" type="String"/>
+    <aura:attribute name="firstNameENValue" type="String"/>
+    <aura:attribute name="lastNameENValue" type="String"/>
+    <aura:attribute name="phoneValue" type="String"/>
+    <aura:attribute name="emailValue" type="String"/>
+    <aura:attribute name="lineIdValue" type="String"/>
+    <aura:attribute name="userSocialAccountColumnName" type="String"/>
+    <aura:attribute name="isUserLevelSecurity" type="Boolean" default="false"/>
+    <aura:handler event="force:refreshView" action="{!c.init}" />
+    <aura:handler event="lightning:tabFocused" action="{!c.init}"/>
+
+    <aura:attribute name="Detail" type="LiveChatProfileDetail[]"/>
+    <article style=" max-height: 350px !important;
+    min-height: 150px !important;">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>Details</span>
+                    </h2>
+                </div>
+                <aura:if isTrue="{!v.isUserLevelSecurity}">
+                    <div class="slds-no-flex">
+                        <lightning:button label="Edit" title="Neutral action" onclick="{!c.onClickEditDetail}"/>     
+                    </div>
+  
+                </aura:if> 
+            </header>
+        </div>
+        <aura:iteration items="{!v.Detail}" var="item">
+            <div class="slds-wrap slds-grid">
+                <div class="slds-col slds-small-size_1-of-1" style="padding-right: 10px;">
+                    <div class="slds-form-element">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                <label class="slds-form-element__label" for="form-element-01">First Name TH</label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">{!item.firstnameDetail}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                 <div class="slds-form-element slds-form-element_readonly">
+                                <label class="slds-form-element__label" for="form-element-01">Last Name TH</label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">{!item.lastnameDetail}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                <label class="slds-form-element__label" for="form-element-01">First Name EN</label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">{!item.firstnameENDetail}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                    <div class="slds-form-element slds-form-element_readonly">
+                                <label class="slds-form-element__label" for="form-element-01">Last Name EN</label>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">{!item.lastnameENDetail}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-large-size_1-of-1" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                    <span class="slds-form-element__label">Phone</span>
+                                    <aura:if isTrue="{!v.isUserLevelSecurity}">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__static">{!item.phoneDetail}</div>
+                                        </div>
+                                    <aura:set attribute="else">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__static"></div>
+                                        </div>
+                                    </aura:set>
+                                    </aura:if> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-large-size_1-of-1" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                    <span class="slds-form-element__label">Email</span>
+                                    <aura:if isTrue="{!v.isUserLevelSecurity}">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__static">{!item.emailDetail}</div>
+                                        </div>
+                                    <aura:set attribute="else">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-form-element__static"></div>
+                                        </div>
+                                    </aura:set>
+                                    </aura:if> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-large-size_1-of-1" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                    <span class="slds-form-element__label">{!v.userSocialAccountColumnName}</span>
+                                    
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">{!item.lineIdDetail}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-large-size_1-of-1" style="padding: 2px">
+                                <div class="slds-form-element slds-form-element_readonly">
+                                    <span class="slds-form-element__label">Owner</span>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-form-element__static">
+                                            <aura:if isTrue="{!v.isUser}">
+                                                <a href="{!item.ownerDetailLink}">{!item.ownerDetail}</a>
+                                            <aura:set attribute="else">
+                                                {!item.ownerDetail}
+                                            </aura:set>
+                                            </aura:if> 
+                                        </div>                 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:iteration>
+        <aura:if isTrue="{!v.isOpenEditDetail}">
+            <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="width: 50% !important;">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-modal__title slds-hyphenate">Edit Detail</h2>
+                        <!-- <p class="slds-m-top_x-small">Are you sure you want to end chat?</p> -->
+                    </header>
+                    <lightning:spinner aura:id="editDetailLoading" class="slds-hide" />                
+                    <aura:if isTrue="{!v.editdetailErrorMessage != null}">
+                        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                            role="alert">
+                            <h1>
+                                <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                    xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#warning" />
+                                {!v.editdetailErrorMessage}
+                            </h1>
+                        </div>
+                    </aura:if>
+                    <div class="slds-modal__content slds-p-around_medium"
+                        style="height: auto !important; padding: 1rem 1.5rem !important;">
+                        <div class="slds-col slds-small-size_1-of-1" style="padding-right: 10px;">
+                            <div class="slds-form-element">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="firstName"
+                                            label="First Name TH"
+                                            value="{!v.firstNameValue }"
+                                            required="false"/>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="lastName"
+                                            label="Last Name TH"
+                                            value="{!v.lastNameValue }"
+                                            required="false"/>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="firstName"
+                                            label="First Name EN"
+                                            value="{!v.firstNameENValue }"
+                                            required="false"/>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="lastName"
+                                            label="Last Name  EN"
+                                            value="{!v.lastNameENValue }"
+                                            required="false"/>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="phone"
+                                            type="tel"
+                                            label="Phone"
+                                            value="{!v.phoneValue }"
+                                            required="false"
+                                            pattern="^[0-9]*$"/>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="email"
+                                            type="email"
+                                            label="Email"
+                                            value="{!v.emailValue }"
+                                            required="false"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2" style="padding: 2px">
+                                        <lightning:input name="lineId"
+                                        label="{!v.userSocialAccountColumnName}"
+                                        value="{!v.lineIdValue }"
+                                        required="false"/>
+                                    </div>
+            
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <lightning:input name="firstName"
+                            label="First Name"
+                            value="{!v.firstNameValue }"
+                            required="false"
+                        />
+                        <lightning:input name="lastName"
+                            label="Last Name"
+                            value="{!v.lastNameValue }"
+                            required="false"
+                        />
+                        <lightning:input name="phone"
+                            type="tel"
+                            label="Phone"
+                            value="{!v.phoneValue }"
+                            required="false"
+                            pattern="^[0-9]*$"
+
+                        />
+                        <lightning:input name="email"
+                            type="email"
+                            label="Email"
+                            value="{!v.emailValue }"
+                            required="false"
+                        /> -->
+                        <!-- <lightning:input name="OthersInput" disabled= "{!v.isOthersInputDisabled}"
+                                        class="margin-others-input" value="{! v.othersInput}"/>
+                        <lightning:textarea label="Chat Note" value="{!v.chatNote}" 
+                                            maxlength="255" messageWhenTooLong="A maximum of 255 characters are allowed."
+                                            class="bold-label font-small"/> -->
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button label="Cancel" title="Cancel" onclick="{!c.onClickCancelEditDetail}"/>
+                        <lightning:button variant="brand" label="Submit" onclick="{!c.onClickSubmitEditDetail}"
+                            title="Submit"
+                            />
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </article>	
+</aura:component>

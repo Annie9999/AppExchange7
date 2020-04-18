@@ -1,0 +1,361 @@
+<aura:component controller="CaseSessionLinkedRecordController"
+    implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction"
+    access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="sessionId" type="String"/>
+    <aura:attribute name="recordData" type="Object"/>
+    <aura:attribute name="caseObj" type="String[]"/>
+    <aura:attribute name="caseObjId" type="String[]"/>
+    <aura:attribute name="owner" type="String"/>
+    <aura:attribute name="temp" type="String"/>
+    <aura:attribute name="acc" type="Object"/>
+    <aura:attribute name="isShowDetail" type="Boolean" default="false"/>
+    <aura:attribute name="isDeleteModalOpen" type="Boolean" default="false"/>
+    <aura:attribute name="isEditModalOpen" type="Boolean" default="false"/>
+    <aura:attribute name="selectedCase" type="String"/>
+    <aura:attribute name="errorMessageEdit" type="String"/>
+    <aura:attribute name="errorMessageDelete" type="String"/>
+    <aura:attribute name="errorMessageNew" type="String"/>
+    <aura:attribute name="sessionCaseDup" type="Object[]" />
+    <aura:attribute name="case_Obj" type="Object" />
+    
+
+   <!-- for new case -->
+   <aura:attribute name="simpleNewCase" type="Case" default="{'sobjectType' : 'Case'}"/>
+   <aura:attribute name="SubjectFieldAPI" type="string" default="Subject" description="store field API name of Subject field"/>
+   <aura:attribute name="StatusFieldAPI" type="string" default="Status" description="store field API name of Status field"/>
+   <aura:attribute name="PriorityFieldAPI" type="string" default="Priority" description="store field API name of Origin field"/>
+
+   <aura:attribute name="listCaseOrigin" type="list" default="Live Chat" description="to store case origin field values"/>
+   <aura:attribute name="listCasePriority" type="list" default="['--None--']" description="to store case priority field values"/>
+   <aura:attribute name="listCaseStatus" type="list" default="['--None--']" description="to store case status field values"/>
+   <aura:attribute name="selectedCustomer" type="Object"/>
+
+
+   <aura:attribute name="chooseCustomer" type="boolean" default="true"/>
+   
+    <aura:registerEvent name="refreshRecord" type="c:selectedsObjectRecordsEvent"/>
+
+    <!-- for log history popup -->
+    <aura:attribute name="isShowButton" type="boolean" default="true"/>
+
+    <!-- for new customer -->
+    <aura:attribute name="isNewCustomerOpen" type="Boolean" default="false"/>
+    <aura:attribute name="IndividualId" type="String"/>    
+
+    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+        <div class="slds-media__figure">
+            <button class="slds-button slds-button_icon slds-m-right_xx-small" onclick="{!c.toggleSwitchButton}">
+                <lightning:icon iconName="{! 'utility:' + (v.isShowDetail? 'chevrondown' : 'chevronright')}" size="x-small" />
+            </button>
+        </div>
+        <div class="slds-media__body">
+            <aura:iteration var="item" items="{!v.caseObj}" indexVar="index">
+            <a href="{! '/' +  v.recordData.iigproduct__Case__c }">
+                <h3 class="slds-hyphenate slds-text-heading_small slds-p-right_xx-small" title="{! 'Case Number ' + v.recordData.iigproduct__Case__r.CaseNumber}">
+                    {! (item != null? item:v.recordData.iigproduct__Case__r.CaseNumber )} </h3>
+            </a>
+        </aura:iteration>
+           
+        </div>
+        <div class="{! (v.isShowButton == true? 'slds-no-flex':'slds-no-flex slds-hide')}">
+            <lightning:buttonGroup>
+                <aura:if isTrue="{! !v.recordData.Case__r.IsClosed }">
+                    
+                    <!-- standard case -->
+                    <button id="{! v.recordData.iigproduct__Case__c }" class="slds-button slds-button_neutral slds-button_icon-border-filled" title="Edit" onclick="{!c.editRecord }">
+                        <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                            iconName="utility:edit" size="x-small" alternativeText="icon" />
+                    </button>
+                    <aura:set attribute="else">
+                        <button id="{! v.recordData.iigproduct__Case__c }" class="slds-button slds-button_neutral slds-button_icon-border-filled" title="Cannot edit closed case" disabled="true">
+                            <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default" style="opacity: 0.5"
+                                iconName="utility:edit" size="x-small" alternativeText="icon" />
+                        </button>
+                    </aura:set>
+                </aura:if>
+                <button id="{! v.recordData.iigproduct__Case__c }" class="slds-button slds-button_neutral slds-button_icon-border-filled"
+                    title="Delete" onclick="{! c.openModalDeleteCase }">
+                    <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                        iconName="utility:delete" size="x-small" alternativeText="icon" />
+                </button>
+            </lightning:buttonGroup>
+        </div>
+    </header>
+    <article class="{! 'slds-box slds-timeline__item_details' + (v.isShowDetail == true? '': ' slds-hide')}" 
+        id="{! 'case' + v.recordData.Id}" style="border: 0px;padding-bottom: 0px !important">
+        
+        <ul class="slds-list_horizontal slds-wrap">
+            <li class="slds-grid slds-grid_vertical slds-size_1-of-2 slds-p-around_small">
+                <span class="slds-text-title slds-p-bottom_x-small">Status</span>
+                <span class="slds-text-body_large slds-form-element_readonly slds-form-element__static">
+                    {! (v.recordData.iigproduct__Case__r.Status == null? '-':v.recordData.iigproduct__Case__r.Status) }</span>
+            </li>
+            
+        </ul>
+        <div class="slds-size_2-of-3 slds-p-around_small">
+            <span class="slds-text-title slds-p-bottom_xx-small">Case Owner</span>
+            <div class="slds-form-element_readonly">
+                <span class="slds-avatar slds-avatar_circle slds-avatar_small slds-m-right_xx-small">
+                    <span class="slds-icon_container slds-icon-standard-user" title="Description of icon when needed">
+                        <img src="{! v.owner.SmallPhotoUrl}" alt="meaningful text" />
+                        <span class="slds-assistive-text">Case Owner Profile Picture</span>
+                    </span>
+                </span>
+                <a class="slds-text-body_large slds-truncate" title="{!v.owner.Name}" href="javascript:void(0);">{!v.owner.Name}</a>
+            </div>
+        </div>
+    </article>
+    <lightning:spinner aura:id="waitingSpinner"
+    class="{! $Browser.formFactor=='DESKTOP'? 'slds-hide loading_margin':'slds-hide'}"
+    style='margin: 0 !important; background: none !important;' />
+
+    <div aura:id="backdrop" class="slds-backdrop"></div>
+    
+    <section aura:id="deleteModal" role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open slds-hide" style="z-index: 9007;">
+        <aura:if isTrue="{! v.isDeleteModalOpen }">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header slds-p-around_medium">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModalDelete }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                    <h3 class="slds-text-heading_medium slds-hyphenate">Delete Case</h3>
+                </div>
+                <aura:if isTrue="{!v.errorMessageDelete != null}">
+                    <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner"
+                        role="alert">
+                        <h2>
+                            <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                            <span>{!v.errorMessageDelete + ' '}</span>
+                        </h2>
+                    </div>
+                </aura:if>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <aura:if isTrue="{!v.sessionCaseDup.length > 0}">
+                        <div class="slds-form-element slds-text-align_left">
+                            <section class=" slds-is-open" id="collapsibleComponent">
+                                <span>There are Chat session associated with this Case </span>
+                            </section>
+                            <div class="slds-text-longform">
+                                <ul>
+                                    <aura:iteration items="{!v.sessionCaseDup}" var="item">
+                                        <li> {!item.ChatSession__r.Name} &nbsp; <b> CreatedDate :
+                                            </b>{!item.CreatedDateDisplay} </li>
+                                    </aura:iteration>
+                                </ul>
+                            </div>
+                            <p class="slds-text-body_medium slds-text-align_left">Are you sure you want to delete this case?</p>
+                        </div>
+                        <aura:set attribute="else">
+                            <p class="slds-text-body_medium slds-text-align_left">Are you sure you want to delete this case?</p>
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <footer class = "slds-modal__footer">
+                    <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                        onclick="{! c.closeModalDelete }" />
+                    <lightning:button variant="brand" label="Delete" title="Delete"
+                        onclick="{! c.deleteCase }" />
+                </footer>
+            </div>
+        </aura:if>
+    </section>
+
+    <lightning:spinner aura:id="loadingSpinner" aria-modal="true"
+            class="{! $Browser.formFactor=='DESKTOP'? 'slds-hide loading_margin':'slds-hide'}"
+            style='margin: 0 !important; background: none !important;position: fixed;top: 0;right: 0;bottom: 0;left: 0;z-index: 9001;' />
+            
+    <section aura:id="editModal" role="dialog" tabindex="-1" aria-modal="true"
+            class="slds-modal slds-fade-in-open slds-hide" style="z-index: 9007;">
+        <aura:if isTrue="{! v.isEditModalOpen }">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header slds-p-around_medium">   
+                    <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModalEdit }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                    <h3 class="slds-text-heading_medium slds-hyphenate">Edit Case</h3>
+                </div>
+                <aura:if isTrue="{!v.errorMessageEdit != null}">
+                    <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner"
+                        role="alert">
+                        <h2>
+                            <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                            <span>{!v.errorMessageEdit + ' '}</span>
+                        </h2>
+                    </div>
+                </aura:if>
+                <div class="slds-modal__content slds-p-vertical_large slds-p-horizontal_xx-large slds-grid slds-wrap" style="min-height: 35vh">
+                    <div class="{! 'slds-col--padded' + (v.chooseCustomer == true? ' slds-large-size--1-of-3 slds-medium-size--1-of-2 slds-small-size--1-of-1':' slds-size--1-of-1') }">
+                        <aura:if isTrue="{! v.chooseCustomer }">
+                            <div class="slds-media slds-media_center slds-has-flexi-truncate slds-m-bottom_medium">
+                                <div class="slds-media__figure">
+                                    <lightning:icon iconName="standard:related_list" size="small" />
+                                </div>
+                                <div class="slds-media__body">
+                                    <span class="slds-text-heading_small slds-hyphenate">Related Information</span>
+                                </div>
+                            </div>
+                        </aura:if>
+                        <div class="slds-col slds-size--1-of-1 slds-m-bottom_small">
+                            <c:customLookupWithAddBtn objectAPIName="Account" IconName="standard:user"
+                                label="Related Customer" selectedRecord="{!v.selectedCustomer}"
+                                onchange="{!c.lookupCustomerChanged}" required="true"
+                                nameField="Name" bold="true"/>
+                        </div>
+                        <aura:if isTrue="{! v.chooseCustomer }">
+                            
+                            <div class="slds-col slds-size--1-of-1 slds-m-bottom_small">
+                                <lightning:input aura:id="caseField" label="Customer Mobile" disabled="true" value="{! v.simpleNewCase.ContactMobile }"/>
+                            </div>
+                            <div class="slds-col slds-size--1-of-1 slds-m-bottom_small">
+                                <lightning:input aura:id="caseField" label="Customer Email" disabled="true" value="{! v.simpleNewCase.ContactEmail }"/>
+                            </div>
+                        
+                        </aura:if>
+                    </div>
+                    <aura:if isTrue="{! v.chooseCustomer }">
+                        <div class="{! 'slds-col--padded slds-large-size--2-of-3 slds-medium-size--1-of-2 slds-small-size--1-of-1' +($Browser.formFactor=='DESKTOP'? ' slds-p-left_xx-large':'')}">
+                            <div class="slds-media slds-media_center slds-has-flexi-truncate slds-m-bottom_medium">
+                                <div class="slds-media__figure">
+                                    <lightning:icon iconName="standard:case" size="small" />
+                                </div>
+                                <div class="slds-media__body">
+                                    <span class="slds-text-heading_small slds-hyphenate">Case Information</span>
+                                </div>
+                            </div>
+                            <div class="slds-grid slds-wrap slds-grid--pull-padded">
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:input label="Subject" disabled="true" title="{! v.simpleNewCase.Subject }" value="{! v.simpleNewCase.Subject }"/>
+                                </div>
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:select value="{!v.simpleNewCase.Origin}" label="Case Origin" disabled="true">
+                                        <aura:iteration items="{!v.listCaseOrigin}" var="val">
+                                            <option value="{!val}">{!val}</option>
+                                        </aura:iteration>
+                                    </lightning:select>
+                                </div>
+                                
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:select value="{!v.simpleNewCase.Priority}" label="Priority">
+                                        <aura:iteration items="{!v.listCasePriority}" var="val">
+                                            <option value="{!val}">{!val}</option>
+                                            </aura:iteration>
+                                    </lightning:select>
+                                </div>
+                                
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:select value="{!v.simpleNewCase.Status}" label="Status" required="true">
+                                        <aura:iteration items="{!v.listCaseStatus}" var="val">
+                                            <option value="{!val}">{!val}</option>
+                                            </aura:iteration>
+                                    </lightning:select>
+                                </div>
+                                
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:textarea label="Media Info Description" />
+                                </div>
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-2 slds-m-bottom_small">
+                                    <lightning:textarea label="Description" value="{!v.simpleNewCase.Description}"/>
+                                </div>
+                                
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-1 slds-m-bottom_small">
+                                    <label class="slds-form-element__label" for="form-element-01">iContact Case Number</label>
+                                    <div class="slds-text-body_regular" ></div>
+                                </div> 
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-1 slds-m-bottom_small">
+                                    <label class="slds-form-element__label" for="form-element-01">Originate From</label>
+                                    <div class="slds-text-body_regular" ></div>
+                                </div> 
+                                <div class="slds-col--padded slds-size--1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-1 slds-m-bottom_small">
+                                    <label class="slds-form-element__label" for="form-element-01">AccountId</label>
+                                    <div class="slds-text-body_regular" >dddd</div>
+                                </div> 
+                            </div>
+                        </div>
+                    </aura:if>
+                </div>
+                <footer class = "slds-modal__footer">
+                    <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                        onclick="{! c.closeModalEdit }" />
+                    <lightning:button variant="brand" label="Save" title="Save"
+                        onclick="{! c.submitEditCase }" />
+                </footer>
+            </div>
+        </aura:if>
+    </section>
+    
+    <section aura:id="newCustomerModal" role="dialog" tabindex="-1" aria-modal="true"
+            class="slds-modal slds-modal_medium slds-fade-in-open slds-hide" style="z-index: 9007;">
+        <aura:if isTrue="{! v.isNewCustomerOpen }">
+            <div class="slds-modal__container">
+                <lightning:spinner aura:id="newCustomerSpinner"
+                    class="{! $Browser.formFactor=='DESKTOP'? 'slds-hide loading_margin':'slds-hide'}"
+                    style='margin: 0 !important; background: none !important;' />
+                <div class="slds-modal__header slds-p-around_medium">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModalNewCustomer }"
+                            alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                    <h3 class="slds-text-heading_medium slds-hyphenate">New Customer: Individual Customer</h3>
+                </div>
+                <aura:if isTrue="{!v.errorMessageNew != null}">
+                    <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner"
+                        role="alert">
+                        <h2>
+                            <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                            <span>{!v.errorMessageNew + ' '}</span>
+                        </h2>
+                    </div>
+                </aura:if>
+                <div class="slds-modal__content slds-p-vertical_large slds-p-horizontal_xx-large slds-grid slds-wrap">
+                    <lightning:recordEditForm objectApiName="Account" recordTypeId="{! v.IndividualId }" onerror="{!c.handleError}" onsubmit="{!c.handleSubmit}" onsuccess="{!c.handleSuccess}">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Name" required="true"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Gender__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Salutation_EN__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Birthday__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="First_Name_EN__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Marital_Status__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Last_Name_EN__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Race__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Nickname__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Nationality__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="ID_Number__c"/>
+                            </div>
+                            <div class="slds-col slds-small-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 slds-m-bottom_xx-small slds-p-horizontal_x-large">
+                                <lightning:inputField fieldName="Passport_No__c"/>
+                            </div>
+                            
+                        </div>
+                        <div class="slds-float_right">
+                            <lightning:button variant="neutral" class="slds-m-horizontal_small" label="Cancel" title="Cancel"
+                                onclick="{! c.closeModalNewCustomer }" />
+                            <lightning:button variant="brand" type="submit" class="slds-m-horizontal_small" label="Save"/>
+                        </div>
+                    </lightning:recordEditForm>
+                </div>
+            </div>
+        </aura:if>
+    </section>
+
+</aura:component>

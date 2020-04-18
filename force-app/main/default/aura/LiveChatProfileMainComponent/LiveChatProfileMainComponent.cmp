@@ -1,0 +1,25 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global">
+    <lightning:layoutItem padding="around-small" size="12">
+                <lightning:layout>
+                    <lightning:layoutItem padding="around-small" size="4">
+                        <div class="page-section page-right">
+                            <c:LiveChatProfileDetailComponent recordId="{!v.recordId}"/>
+                        </div>
+                        <div class="page-section page-section-next">
+                            <c:LiveChatProfileNoteComponent  recordId="{!v.recordId}"/>
+                        </div>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem padding="around-small" size="8">
+                        <div class="page-section page-right">
+                                <c:LiveChatProfileLeadComponent recordId="{!v.recordId}"/>
+                        </div>
+                        <div class="page-section page-section-next">
+                                <c:LiveChatProfileCaseComponent recordId="{!v.recordId}"/> 
+                        </div>
+                        <div class="page-section page-section-next">
+                            <c:LiveChatProfileCustomerComponent recordId="{!v.recordId}"/> 
+                    </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+            </lightning:layoutItem>
+</aura:component>

@@ -1,0 +1,124 @@
+<aura:component controller="LiveChatHistoryComponentRemote" implements="flexipage:availableForAllPageTypes" access="global">
+    <aura:attribute name="recordId" type="Id"/>
+    <aura:attribute name="dataTimeLines" type="List"/>
+    <aura:attribute name="currentDataTimeLine" type="Object"/>
+    <aura:attribute name="startChatDateTime" type="String"/>
+    <aura:attribute name="currentChatSession" type="ChatSession__c"/>
+    <aura:attribute name="chatCollectionByDate" type="List"/>
+    <aura:attribute name="isHasPreviousMessage" type="Boolean" default="false"/>
+    <aura:attribute name="previousMessage" type="ChatMessage__c" default="null"/>
+    <aura:attribute name="isOpenChatHistoryPopup" type="Boolean" default="false"/>
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+    <aura:handler name="customBasicHeaderClicked" event="c:EnlargePictureEvent" action="{!c.navigateToObject}" />
+    <aura:handler name="clickShowMoreMessageEventInChatHistory" event="c:EnlargePictureEvent" action="{!c.handleShowmoreMessage}" />
+    <aura:handler name="clickDownloadFileEventInChatHistory" event="c:EnlargePictureEvent" action="{!c.handleDownloadFile}"/>
+    <aura:handler name="clickDownloadImageEventInChatHistory" event="c:EnlargePictureEvent" action="{!c.handleDownloadImage}"/>
+
+    <aura:handler event="force:refreshView" action="{!c.onInit}" />
+    <aura:handler event="lightning:tabFocused" action="{!c.onInit}"/>
+
+    <article>
+        <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <span style="font-weight: bold">Engagement History ({!v.dataTimeLines.length})</span>
+                        </h2>
+                    </div>
+                </header>
+            </div>
+           
+            <div class="slds-card__body slds-card__body_inner">
+                <ui:scrollerWrapper class="full-height">
+                <aura:iteration items="{!v.dataTimeLines}" var="data" indexVar="index">
+                    <c:CustomBasicActivityTimeLine
+                        isShowDetail="false" iconName="{!data.iconName}" 
+                        header="{!data.header}" subHeader="{!data.subheader}" 
+                        date="{!data.displayDate}"
+                        recordId="{!data.Id}" index="{!index}"/>
+                </aura:iteration>
+            </ui:scrollerWrapper>
+            </div>
+    </article>
+    
+    <aura:if isTrue="{!v.isOpenChatHistoryPopup}">
+        <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container outer-container" style="width: 100% !important;">
+                <header class="slds-modal__header slds-grid slds-grid_align-spread" style="background: rgb(243, 242, 242);">
+                    <div class="slds-col chat-history-popup-header">
+                        <div class="slds-icon_container chat-history-popup-icon">
+                            <lightning:icon iconName="{!v.currentDataTimeLine.iconName}" size="medium" />
+                        </div>
+                        <div>
+                            <strong class="">{!v.currentDataTimeLine.header}</strong>
+                            <p class="">{!v.currentDataTimeLine.subheader}</p>
+                        </div>
+                    </div>
+                    <div class="slds-col">
+                        <lightning:buttonIcon iconName="utility:close"  alternativeText="Close"  
+                                                onclick="{! c.onClickCancelPopup}" class="close-button"/>
+                    </div>
+                </header>
+                <lightning:spinner aura:id="chatHistoryPopupLoading" class="" />                
+                
+                <div class="slds-modal__content"
+                    style="height: auto !important;">
+                    <!-- <div id="id-container" class="slds-container_fluid slds-scrollable_y">
+                        <c:LiveChatBoxMessageRenderer collection="{!v.chatCollectionByDate}" 
+                                                    isDisplayShowMore="{!v.isHasPreviousMessage}" 
+                                                    eventName="clickShowMoreMessageEventInChatHistory"/>
+                    </div>
+                    <div class="">
+                            <c:LeadSessionLinkedComponent recordId="{!v.currentDataTimeLine.Id}" />
+                    </div> -->
+
+                    <lightning:layoutItem padding="around-small" size="12">
+                        <lightning:layout>
+                            <lightning:layoutItem padding="around-small" size="8">
+                                <div class="page-section page-main">
+                                        <div class="header-container">
+                                                <div class="slds-grid slds-grid_align-spread slds-wrap">
+                                                    <div class="slds-col slds-size_1-of-6">
+                                                        
+                                                    </div>
+                                                    <div class="slds-col header-content slds-size_4-of-6" style="text-align: center;
+                                                    align-self: center;">
+                                                      <lightning:icon iconName="utility:chat" size="xx-small"/>
+                                                      <span> Chat started by <b>{!v.currentChatSession.iigproduct__Social_ID__r.Display_Name__c} • </b>{!v.startChatDateTime}</span>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-6" style="text-align: end;">
+                                                    </div>
+                                                </div>   
+                                              </div>
+                                    <div id="id-container" class="slds-container_fluid slds-scrollable_y">
+                                            <c:LiveChatBoxMessageRenderer collection="{!v.chatCollectionByDate}" 
+                                                                        isDisplayShowMore="{!v.isHasPreviousMessage}" 
+                                                                        eventClickShowMoreName="clickShowMoreMessageEventInChatHistory"
+                                                                        eventClickDownloadFileName="clickDownloadFileEventInChatHistory"
+                                                                        eventClickDownloadImageName="clickDownloadImageEventInChatHistory"
+                                                                        />
+                                        </div>
+                                </div>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem class="right-box-hight" padding="around-small" size="4">
+                                <div class="page-section page-right">
+                                    <!-- <c:LeadSessionLinkedComponent recordId="{!v.currentDataTimeLine.Id}" /> -->
+                                    <c:LeadSessionLinkedComponent recordId="{!v.currentDataTimeLine.Id}" isShowButton="false"/>
+                                </div>
+                                <div class="page-section page-section-next">
+                                    <c:CaseSessionLinkedComponent recordId="{!v.currentDataTimeLine.Id}" isShowButton="false"/>
+                                </div>
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                    </lightning:layoutItem>
+                </div>
+                <footer class="slds-modal__footer note-contant">
+                    <strong class="">Note</strong>
+                    <p style="color: black;padding-top: 10px;">{!v.currentChatSession.iigproduct__Chat_Note__c}</p>
+
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,22 @@
+.THIS .slds-p-around_small{
+    padding: 0.4rem;
+}
+.THIS.c-container {
+    border: 1px solid #d8dde6;
+    margin: 10px 0 20px 0;
+}
+.THIS .page-section {
+    border: solid 1px #ccc;
+    padding: 1rem;
+    border-radius: 2px;
+}
+.THIS .page-section-next {
+    margin-top: 20px ;
+}
+.THIS .page-main {
+ 
+}
+.THIS .page-left,
+.THIS .page-right {
+ 
+}

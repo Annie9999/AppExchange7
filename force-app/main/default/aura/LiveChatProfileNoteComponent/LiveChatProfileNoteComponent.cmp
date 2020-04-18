@@ -1,0 +1,45 @@
+<aura:component controller="LiveChatProfileNote"
+    implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction"
+    access="global">
+    <!-- Handlers -->
+    <aura:handler name="init" value="{! this }" action="{! c.init }" /> 
+    <aura:attribute name="recordId" type="Id" />
+    <aura:handler event="force:refreshView" action="{!c.init}" />
+    <aura:handler event="lightning:tabFocused" action="{!c.init}"/>
+
+    <aura:attribute name="Note" type="LiveChatProfileNote[]"/>
+    <article style=" max-height: 250px !important;
+    min-height: 30px !important;">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>Notes</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+                <!-- the container element determine the height of the datatable -->
+            <div style="max-height: 170px !important;overflow:scroll;overflow-x:hidden !important;">
+                    <aura:iteration items="{!v.Note}" var="item">
+                    <div aura:id="container" class="slds-m-top_small">
+                       
+                            {!item.chatNote }
+                        
+                        <p class="slds-text-color_weak">
+                            <aura:if isTrue="{!item.ownerTypeNote}">
+                                <a href="{!item.ownerNoteLink}"> {!item.ownerNote}</a> Created on {!item.createdDate} at {!item.createdTime}
+                            <aura:set attribute="else">
+                                {!item.ownerNote} Created on {!item.createdDate} at {!item.createdTime}
+                            </aura:set>
+                            </aura:if> 
+                           
+                        </p>
+                
+                    </div>
+                    </aura:iteration>
+            </div>
+        </div>
+    </article>
+</aura:component>

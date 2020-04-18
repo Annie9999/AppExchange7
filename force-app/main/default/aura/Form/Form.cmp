@@ -1,0 +1,69 @@
+<aura:component controller="chatConfiguration" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction"
+access="global">
+    <aura:attribute name="Config" type="ChatConfiguration__c"
+    />
+
+
+                   <!--declare var-->
+
+
+    <aura:handler name="init" value="{!this}" action="{! c.doInit }" />
+    <fieldset style="width:800px" class="slds-box slds-theme--default slds-align_absolute-center">
+
+      <div class="slds-page-header">
+        <h1 align="center" class="slds-text-heading--label">Chat Configuration</h1>
+        
+    </div>
+       
+  
+        <!-- CREATE NEW CONFIGURATION FORM -->
+        <form class="slds-form--stacked">          
+            <lightning:input aura:id="configform" label="UserName"
+                             name="configUsername"
+                             value="{!v.Config.iigproduct__username__c}"
+                             required="true"/> 
+            <lightning:input aura:id="configform" label="Password"
+                             name="configPassword"
+                             value="{!v.Config.iigproduct__password__c}"
+                             required="true"/>
+            <lightning:input aura:id="configform" label="LINE UserID"
+                             name="configLineId"
+                             value="{!v.Config.iigproduct__line_user_id__c}"
+                             placeholder="LINE OA."
+                             required="true"/>
+            <lightning:input aura:id="configform" label="Grant Type"
+                             name="configGrant"
+                             value="{!v.Config.iigproduct__grant_type__c}"
+                             required="true"/>
+            <lightning:input aura:id="configform" label="Client ID"
+                             name="configClientId"
+                             value="{!v.Config.iigproduct__client_id__c}"
+                             required="true"/>
+            <lightning:input aura:id="configform" label="Client Secret"
+                             name="configClientSecret"
+                             value="{!v.Config.iigproduct__client_secret__c}"
+                             required="true"/>
+            <lightning:input aura:id="configform" label="Session Expired"
+                             name="configSessionExpired"
+                             value="{!v.Config.iigproduct__session_expired__c}"
+                             type="number" 
+                             step="0.01"
+                            />
+            <lightning:input aura:id="configform" label="ChatQueue"
+                             name="configAppChat"
+                             value="{!v.Config.iigproduct__chatQueue__c}"
+                             required="true"/>                                                   
+            <div class="slds-align_absolute-center">
+             
+              <lightning:button label="Create configuration" 
+               class="slds-m-top--medium"
+              variant="brand"
+              onclick="{!c.clickCreate}"/>
+              <c:ActionAPI/>
+                          </div>
+           
+        </form>
+        <!-- / CREATE NEW EXPENSE FORM -->
+  
+      </fieldset>
+</aura:component>

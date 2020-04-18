@@ -1,0 +1,18 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global">
+    <lightning:layoutItem padding="around-small" size="12">
+        <lightning:layout>
+    
+            <lightning:layoutItem padding="around-small" size="12">
+                <div class="page-section page-right" style="max-height: 330px;">
+                    <c:LeadSessionLinkedComponent recordId="{!v.recordId}" />
+                </div>
+                <!--<div class="page-section page-section-next" style="max-height: 330px;">
+                    <c:CaseSessionLinkedComponent recordId="{!v.recordId}" />
+                </div>-->
+              
+            </lightning:layoutItem>
+        </lightning:layout>
+    </lightning:layoutItem>
+
+
+</aura:component>

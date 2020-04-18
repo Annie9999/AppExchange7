@@ -1,0 +1,42 @@
+.THIS .accordionSec{
+    padding-right: 0px !important;
+}
+.THIS .full-height {
+    max-height: 250px !important;
+}
+.THIS .leadInputBox{
+    margin: 5px;
+}
+.THIS .leadsource_selection{
+    height: 36px;
+}
+
+.THIS lightning-primitive-header-actions {
+    display: none;
+}
+.THIS .displayNone{
+    display : none;
+}
+.THIS .disable_element {
+    display: none;
+}
+.THIS .loadingSpinner{
+    margin-bottom: 205px !important;
+    margin-top:205px !important;
+}
+.THIS .slds-textarea{
+    height: 36px !important;
+}
+.THIS .InputLeadElement{
+    height: 36px !important;
+}
+.THIS .slds-select{
+    height: 36px !important;
+}
+.THIS #del-loading{
+    backdrop-filter: none;
+    background: none;
+}
+.THIS .slds-icon_small{
+    height: 18px !important;
+}

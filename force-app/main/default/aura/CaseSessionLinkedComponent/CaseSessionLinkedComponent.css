@@ -1,0 +1,12 @@
+.THIS .selectedBtn:hover {
+    background-color: #ffffff !important;
+    color: #080707;
+}
+
+.THIS .slds-col .slds-form-element {
+    margin-bottom: var(--lwc-spacingXxSmall,0.25rem);
+}
+
+.THIS .full-height{
+    max-height: 250px;
+}

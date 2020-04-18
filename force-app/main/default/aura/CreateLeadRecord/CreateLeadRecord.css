@@ -1,0 +1,22 @@
+.THIS {
+    margin-top: 0.5rem;
+}
+.THIS .slds-p-around_medium {
+    padding: 10px;
+}
+.THIS .custom-footer {
+    position: sticky;
+    background-color: white;
+    bottom: 0px;
+    right: 0px;
+    padding: 1rem 0;
+    z-index: 100;
+}
+.THIS.custom-error {
+    position: sticky;
+    top: 0px;
+    z-index: 100;
+}
+.THIS .slds-is-relative{
+    position: absolute;
+}

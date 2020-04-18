@@ -1,0 +1,60 @@
+.THIS .full-height {
+    max-height: 300px;
+}
+.THIS .slds-card__body{
+    margin-bottom: 0;
+}
+.THIS .chat-history-popup-header{
+    text-align: start;
+    display: flex;
+}
+.THIS .slds-icon_container.chat-history-popup-icon{
+    align-self: center;
+    padding-right: 0.6rem;
+}
+.THIS .close-button{
+    background: white;
+}
+.THIS .note-contant{
+    text-align: start;
+    border-top: none;
+    color: #3e3e3c;
+}
+.THIS .outer-container{
+    max-width: 70rem;
+}
+.THIS .page-section {
+    border: solid 1px #ccc;
+    padding: 1rem;
+    border-radius: 2px;
+}
+.THIS .page-section-next {
+    margin-top: 20px ;
+}
+.THIS .page-main {
+   
+}
+.THIS .page-left,
+.THIS .page-right {
+ 
+}
+.THIS .cLiveChatBoxMessageRenderer.content {
+    min-height: 200px;
+    max-height: 400px;
+}
+.THIS .slds-modal__header{
+    border-bottom: none;
+}
+.THIS .header-container{
+    align-items: center;
+    border: #dddbda 0 solid;
+    border-bottom-width: 1px;
+    color: #3e3e3c;
+    font-size: 0.8125rem;
+    justify-content: center;
+    padding: 0.5rem 0;
+    width: 100%;
+}
+.THIS .right-box-hight{
+    height: 100%;
+}

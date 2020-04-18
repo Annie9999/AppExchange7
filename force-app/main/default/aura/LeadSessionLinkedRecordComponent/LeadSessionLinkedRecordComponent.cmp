@@ -1,0 +1,282 @@
+<aura:component controller="LeadSessionLinkedRecordController"
+    implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable,force:lightningQuickAction"
+    access="global">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="sessionId" type="String" />
+    <aura:attribute name="recordData" type="Object" />
+    <aura:attribute name="isShowButton" type="boolean" default="true" />
+    <aura:attribute name="leadDataSession" type="Object[]" />
+    <aura:attribute name="leadDataSessionSize" type="Integer" default="0" />
+    <aura:attribute name="isShowDetail" type="Boolean" default="false" />
+    <aura:attribute name="isModalEditOpen" type="boolean" default="false" />
+    <aura:attribute name="isModalDeleteOpen" type="boolean" default="false" />
+    <!--aura:attribute name="selectedProject" type="Object" default="" />-->
+    <aura:attribute name="projectCondition" type="String" default="AND iigproduct__Active__c = 'TRUE'" />
+    <aura:attribute name="indexLead" type="Integer" />
+    <aura:attribute name="leadEdit" type="sObject" />
+    <aura:attribute name="picklistLeadSource" type="List" />
+    <aura:attribute name="picklistMediaInfo" type="List" />
+    <aura:attribute name="picklistPurpose" type="List" />
+    <aura:attribute name="mediaInputForm" type="Boolean" default="false" />
+    <aura:attribute name="mediaInputEditForm" type="Boolean" default="false" />
+    <aura:attribute name="errorMessage" type="String" />
+    <aura:attribute name="sessionLeadDup" type="Object[]" />
+    <aura:attribute name="leadIdDel" type="String" default=""/>
+    
+    <aura:registerEvent name="refreshLeadRecord" type="c:selectedsObjectRecordsEvent"/>
+    <aura:handler name="afterCreateLeadRecord" event="c:EnlargePictureEvent" action="{!c.handleAfterEditLead}" />
+
+    <lightning:workspaceAPI aura:id="workspace"/>
+
+    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+        <div class="slds-media__figure">
+            <button class="slds-button slds-button_icon slds-m-right_xx-small" onclick="{!c.toggleSwitchButton}">
+                <lightning:icon iconName="{! 'utility:' + (v.isShowDetail? 'chevrondown' : 'chevronright')}"
+                    size="x-small" />
+            </button>
+        </div>
+        <div class="slds-media__body">
+            <!-- <a href="{! '/' +  v.recordData.iigproduct__Lead__c }">
+                <h3 class="slds-hyphenate slds-text-heading_small slds-p-right_xx-small"
+                    title="{! v.recordData.Lead__r.FirstName +' '+ v.recordData.Lead__r.LastName}">
+                    {! v.recordData.Lead__r.FirstName +' '+ v.recordData.Lead__r.LastName}
+                </h3>
+            </a> -->
+            <div onclick="{!c.openNewTab}">
+                <a href="#">
+                    <h3 class="slds-hyphenate slds-text-heading_small slds-p-right_xx-small"
+                        title="{! v.recordData.iigproduct__Lead__r.FirstName +' '+ v.recordData.iigproduct__Lead__r.LastName}">
+                        {! v.recordData.iigproduct__Lead__r.FirstName +' '+ v.recordData.iigproduct__Lead__r.LastName}
+                    </h3>
+                </a>
+            </div>
+           
+            <!-- <p class="slds-p-right_xx-small"
+                title="{!(v.recordData.iigproduct__Lead__r.Status == null? 'None': 'Status: ' + v.recordData.iigproduct__Lead__r.Status )}">
+                {! (v.recordData.iigproduct__Lead__r.Status == null? 'None':'Status: '+ v.recordData.iigproduct__Lead__r.Status)}</p> -->
+                <!--<p class="slds-p-right_xx-small">
+                    {!v.recordData.iigproduct__Lead__r.Interested_Project__r.Name}
+                </p>-->
+        </div>
+        <div class="{! (v.isShowButton == true? 'slds-no-flex':'slds-no-flex slds-hide')}">
+            <lightning:buttonGroup>
+                <button id="{! v.recordData.iigproduct__Lead__c }"
+                    class="slds-button slds-button_neutral slds-button_icon-border-filled" title="Edit"
+                    value="{!v.indexLead}" onclick="{! c.openModelEdit }">
+                    <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                        iconName="utility:edit" size="x-small" alternativeText="icon" />
+                </button>
+
+                <button id="{! v.recordData.iigproduct__Lead__c }"
+                    class="slds-button slds-button_neutral slds-button_icon-border-filled" title="Delete"
+                    value="{!v.indexLead}" onclick="{! c.openModelDelete }">
+                    <lightning:icon class="slds-icon slds-icon slds-icon_small slds-icon-text-default"
+                        iconName="utility:delete" size="x-small" alternativeText="icon" />
+                </button>
+            </lightning:buttonGroup>
+        </div>
+    </header>
+    <article class="{! 'slds-box slds-timeline__item_details' + (v.isShowDetail == true? '': ' slds-hide')}"
+        id="{! 'case' + v.recordData.Id}" style="border: 0px;padding-bottom: 0px !important">
+        <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">First Name</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                
+                                {!v.recordData.iigproduct__Lead__r.FirstName}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Last Name</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.recordData.iigproduct__Lead__r.LastName}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Mobile</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.recordData.iigproduct__Lead__r.MobilePhone}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Email</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.recordData.iigproduct__Lead__r.Email}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="slds-grid slds-wrap"> -->
+                <!-- <div class="slds-col slds-size_1-of-1">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Interested Project</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/' + v.recordData.Lead__r.Interested_Project__c}"
+                                    target="_new">
+                                    {!v.recordData.Lead__r.Interested_Project__r.Name}
+                                </a></div>
+                        </div>
+                    </div>
+                </div> -->
+                <!-- <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Status</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.recordData.Lead__r.Status}</div>
+                        </div>
+                    </div>
+                </div> -->
+            <!-- </div> -->
+              <!--<div class="slds-grid slds-wrap">
+               <div class="slds-col slds-size_1-of-1">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Status</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                {!v.recordData.Lead__r.Status}</div>
+                        </div>
+                    </div>
+                </div> -->
+                <!--<div class="slds-col slds-size_1-of-1">
+                    <div class="slds-form-element slds-form-element_readonly leadInputBox">
+                        <span class="slds-form-element__label">Interested Project</span>
+                        <div class="slds-form-element__control">
+                            <div class="slds-form-element__static">
+                                <a href="{! '/' + v.recordData.Lead__r.Interested_Project__c}"
+                                    target="_new">
+                                    {!v.recordData.Lead__r.Interested_Project__r.Name}
+                                </a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
+    </article>
+
+    <!-- Edit -->
+    <div class="slds-m-around_xx-large slds-hide" aura:id="editModal">
+            <!--Use aura:if tag to display/hide popup based on isModalEditOpen value-->
+            <aura:if isTrue="{!v.isModalEditOpen}">
+                <!-- Modal/Popup Box starts here-->
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                    aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+                    <div class="slds-modal__container">
+                        <!-- Modal/Popup Box Header Starts here-->
+                        <lightning:spinner aura:id="update-loading" class="slds-hide loadingSpinner" />
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModelEdit }"
+                                alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Lead Edit</h2>
+                        </header>
+                        <aura:if isTrue="{!v.errorMessage != null}">
+                            <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                                role="alert">
+                                <h2>
+                                    <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                        xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                                    <span>{!v.errorMessage + ' '}</span>
+                                </h2>
+                            </div>
+                        </aura:if>
+                        <!--Modal/Popup Box Body Starts here-->
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"
+                        style="padding: 0rem 1rem 0 1rem;">
+                            <c:CreateLeadRecord recordId="{!v.recordData.iigproduct__Lead__c}" isCreating="false"/>
+                        </div>
+                        <!--Modal/Popup Box Footer Starts here-->
+                        <!-- <footer class="slds-modal__footer">
+                            <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                onclick="{! c.closeModelEdit }" />
+                            <lightning:button variant="brand" label="OK" title="OK" onclick="{!c.submitEdit}" />
+                        </footer> -->
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </aura:if>
+        </div>
+    
+        <!-- Delete -->
+        <div class="slds-m-around_xx-large slds-hide" aura:id= "deleteModal">
+            <!--Use aura:if tag to display/hide popup based on isModalEditOpen value-->
+            <aura:if isTrue="{!v.isModalDeleteOpen}">
+                <!-- Modal/Popup Box starts here-->
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                    aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <!-- Modal/Popup Box Header Starts here-->
+                        <lightning:spinner aura:id="del-loading" id="del-loading" class="slds-hide loadingSpinner" />
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModelDelete }"
+                                alternativeText="close" variant="bare-inverse" class="slds-modal__close" />
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Lead Delete</h2>
+                        </header>
+                        <aura:if isTrue="{!v.errorMessage != null}">
+                            <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture slds-banner leftalign"
+                                role="alert">
+                                <h2>
+                                    <c:svgIcon class="slds-icon icon-text-email slds-icon--x-small slds-m-right--x-small"
+                                        xlinkHref="/_slds/icons/utility-sprite/svg/symbols.svg#error" />
+                                    <span>{!v.errorMessage + ' '}</span>
+                                </h2>
+                            </div>
+                        </aura:if>
+                        <!--Modal/Popup Box Body Starts here-->
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"
+                            style="max-height: 200px;">
+                            <div class="slds-wrap slds-grid" style="padding-left: 10px;">
+                                <div class="slds-col slds-small-size_1-of-1" style="padding-right: 10px;">
+                                    <aura:if isTrue="{!v.sessionLeadDup.length >0}">
+                                        <div class="slds-form-element slds-text-align_left">
+                                            <section class=" slds-is-open" id="collapsibleComponent">
+                                                <span>There are Chat session associated with this Lead </span>
+                                            </section>
+                                            <div class="slds-text-longform">
+                                                <ul>
+                                                    <aura:iteration items="{!v.sessionLeadDup}" var="item">
+                                                        <li> {!item.ChatSession__r.Name} &nbsp; <b> CreatedDate :
+                                                            </b>{!item.CreatedDateDisplay} </li>
+                                                    </aura:iteration>
+                                                </ul>
+                                            </div>
+                                            <section class=" slds-is-open" id="collapsibleComponent">
+                                                <span>Are you sure you want to delete this Lead? </span>
+                                            </section>
+                                        </div>
+                                        <aura:set attribute="else">
+                                            <div class="slds-form-element slds-text-align_center">
+                                                <section class=" slds-is-open" id="collapsibleComponent">
+                                                    <span>Are you sure you want to delete this Lead? </span>
+                                                </section>
+                                            </div>
+                                        </aura:set>
+                                    </aura:if>
+                                </div>
+                            </div>
+                        </div>
+                        <!--Modal/Popup Box Footer Starts here-->
+                        <footer class="slds-modal__footer">
+                            <lightning:button variant="neutral" label="Cancel" title="Cancel"
+                                onclick="{! c.closeModelDelete }" />
+                            <lightning:button variant="brand" label="OK" title="OK" onclick="{!c.submitDelete}" />
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </aura:if>
+        </div>
+</aura:component>

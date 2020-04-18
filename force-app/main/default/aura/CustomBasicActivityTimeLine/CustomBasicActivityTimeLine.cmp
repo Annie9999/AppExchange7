@@ -1,0 +1,66 @@
+<aura:component>
+	<aura:attribute name="isShowDetail" type="Boolean" default="false"/>
+	<aura:attribute name="iconName" type="String" default="standard:event"/>
+	<aura:attribute name="header" type="String" default="header"/>
+	<aura:attribute name="subHeader" type="String" default="sunHeader"/>
+	<aura:attribute name="date" type="String" default="dd mmm yy"/>
+	<aura:attribute name="recordId" type="String"/>
+	<aura:attribute name="index" type="Integer"/>
+
+    <aura:registerEvent name="customBasicHeaderClicked" type="c:EnlargePictureEvent" />
+
+		<ul class="slds-timeline">
+				<li>
+						<div class="slds-timeline__item_expandable slds-timeline__item_call">
+						  <span class="slds-assistive-text"></span>
+						  <div class="slds-media">
+							<div class="slds-media__figure">
+							  <button class="slds-button slds-button_icon" style="visibility: hidden;">
+								<lightning:icon iconName="{! 'utility:' + (v.isShowDetail? 'chevrondown' : 'chevronright')}" alternativeText="Switch" size="x-small" />
+							  </button>
+							  <div class="slds-icon_container slds-timeline__icon">
+								<lightning:icon iconName="{!v.iconName}" size="small" />
+							  </div>
+							</div>
+							<div class="slds-media__body">
+							  <div class="slds-grid slds-grid_align-spread slds-timeline__trigger">
+								<div class="slds-grid slds-grid_vertical-align-center slds-truncate_container_75 slds-no-space">
+								  <h3 class="slds-truncate">
+									<a href="javascript:void(0);" onclick="{!c.onClickHeader}">
+									  <strong>{!v.header}</strong>
+									</a>
+								  </h3>
+								</div>
+								<div class="slds-timeline__actions slds-timeline__actions_inline">
+								  <p class="slds-timeline__date">{!v.date}</p>
+								</div>
+							  </div>
+							  <p class="slds-m-horizontal_xx-small" style="color: grey;">
+								 {!v.subHeader}
+							  </p>
+							  <!-- <article class="slds-box slds-timeline__item_details slds-theme_shade slds-m-top_x-small slds-m-horizontal_xx-small" id="call-item-base" aria-hidden="true">
+								<ul class="slds-list_horizontal slds-wrap">
+								  <li class="slds-grid slds-grid_vertical slds-size_1-of-2 slds-p-bottom_small">
+									<span class="slds-text-title slds-p-bottom_x-small">Name</span>
+									<span class="slds-text-body_medium slds-truncate" title="Adam Chan">
+									  <a href="javascript:void(0);">Adam Chan</a>
+									</span>
+								  </li>
+								  <li class="slds-grid slds-grid_vertical slds-size_1-of-2 slds-p-bottom_small">
+									<span class="slds-text-title slds-p-bottom_x-small">Related To</span>
+									<span class="slds-text-body_medium slds-truncate" title="Tesla Cloudhub + Anypoint Connectors">
+									  <a href="javascript:void(0);">Tesla Cloudhub + Anypoint Connectors</a>
+									</span>
+								  </li>
+								</ul>
+								<div>
+								  <span class="slds-text-title">Description</span>
+								  <p class="slds-p-top_x-small">Adam seemed interested in closing this deal quickly! Let’s move.</p>
+								</div>
+							  </article> -->
+							</div>
+						  </div>
+						</div>
+					  </li>
+			</ul>
+</aura:component>
